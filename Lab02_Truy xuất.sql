@@ -38,12 +38,27 @@ FROM dbo.CongNhan,dbo.SanPham,dbo.ThanhPham
 WHERE ThanhPham.MASP=SanPham.MASP AND CongNhan.MACN=ThanhPham.MACN
 GROUP BY TenSP,Ten,SoLuong,TienCong*SoLuong
 
+--7.Tổng số tiền công đã trả cho công nhân trong tháng 1 năm 2007
+SELECT SUM(TongL.TienCong) AS N'Tổng số tiền lương'
+FROM (	SELECT sp.TienCong*tp.SoLuong as TienCong
+		FROM dbo.SanPham sp,dbo.ThanhPham tp
+		WHERE sp.MASP=tp.MASP AND YEAR(tp.Ngay)=2007 AND MONTH(tp.Ngay)=01) AS TongL
+
 --8.Cho biết sản phẩm được sản xuất nhiều nhất trong tháng 2/2007
 SELECT TenSP
 FROM dbo.SanPham,dbo.ThanhPham
 WHERE SanPham.MASP=ThanhPham.MASP AND MONTH(Ngay) ='02' AND YEAR(Ngay)='2007' AND SoLuong IN(	SELECT MAX(SoLuong)
 																								FROM dbo.SanPham,dbo.ThanhPham
 																								WHERE SanPham.MASP=ThanhPham.MASP AND MONTH(Ngay) ='02' AND YEAR(Ngay)='2007')
+
+--9.Cho biết công nhân sản xuất được nhiều chén nhất
+SELECT cn.MACN,cn.Ho+' '+cn.Ten AS HoTen
+FROM dbo.CongNhan cn,dbo.ThanhPham tp
+WHERE cn.MACN=tp.MACN AND tp.MASP='SP002' AND tp.SoLuong IN (	SELECT MAX(SoLuong) AS maxSl	
+																FROM dbo.CongNhan,dbo.ThanhPham
+																WHERE CongNhan.MACN=ThanhPham.MACN AND MASP='SP002')
+
+
 
 --10.Tiền công tháng 2/2006 của công nhân viên có mã số 'CN002'
 SELECT L.HoTen,SUM(l.TongTienCong) AS TienCongThang2

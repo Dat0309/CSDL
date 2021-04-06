@@ -27,6 +27,34 @@ SELECT *
 FROM dbo.DoiTac,dbo.KhaNangCC
 WHERE KhaNangCC.MaDT=DoiTac.MaDT AND MAHH LIKE 'CPU%'
 
+--6.Cho biết tên các nhà cung cấp có thể cung cấp tất cả các loại đĩa cứng
+--Hướng giải: Tìm tên các đối tác cung cấp/ mà không có hàng hóa thuộc loại đĩa cứng nào/ mà các đối tác đó không làm
+SELECT DT.TenDT 
+FROM dbo.DoiTac DT
+WHERE  DT.MaDT IN(
+SELECT DISTINCT KN.MaDT
+FROM  dbo.KhaNangCC KN  
+WHERE KN.MaDT LIKE 'CC%' 
+AND NOT EXISTS (	SELECT *
+					FROM dbo.HangHoa HH
+					WHERE HH.MaHH LIKE 'CPU%'
+					AND NOT EXISTS (	SELECT *
+										FROM dbo.KhaNangCC KN2
+										WHERE KN2.MAHH=HH.MAHH AND KN2.MaDT=KN.MaDT)))
+
+--7.Cho biết tên các nhà cung cấp không cung cấp đĩa cứng
+SELECT DT.TenDT 
+FROM dbo.DoiTac DT
+WHERE  DT.MaDT in(
+SELECT DISTINCT KN.MaDT
+FROM  dbo.KhaNangCC KN  
+WHERE KN.MaDT LIKE 'CC%' 
+AND not EXISTS (	SELECT *
+					FROM dbo.HangHoa HH
+					WHERE HH.MaHH LIKE 'CPU%'
+					AND  EXISTS (	SELECT *
+										FROM dbo.KhaNangCC KN2
+										WHERE KN2.MAHH=HH.MAHH AND KN2.MaDT=KN.MaDT)))
 --14.Cho biết cửa hàng bán bao nhiêu mặt hàng
 SELECT COUNT(MaHH) AS SoLuongMH
 FROM dbo.HangHoa
