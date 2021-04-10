@@ -1,4 +1,4 @@
-CREATE DATABASE AppQLHV
+﻿CREATE DATABASE AppQLHV
 GO
 USE AppQLHV
 GO
@@ -31,3 +31,26 @@ CREATE TABLE LopHoc(
 	TinhTrang BIT NOT NULL
 )
 
+-----------------------------
+INSERT INTO dbo.HocVien
+VALUES
+(   '1914775',        -- MaHV - char(11)
+    N'Đinh Trọng Đạt',       -- HoTen - nvarchar(30)
+    '09/03/2001', -- NgaySinh - datetime
+    1,      -- GioiTinh - bit
+    '0865447141',        -- DienThoai - varchar(10)
+    N'Đà Lạt',       -- DiaChi - nvarchar(30)
+    1       -- TinhTrang - bit
+    )
+INSERT INTO dbo.HocVien
+VALUES 
+(   '1914899',        -- MaHV - char(11)
+    N'Trần Minh Cảnh',       -- HoTen - nvarchar(30)
+    '08/06/2001', -- NgaySinh - datetime
+    1,      -- GioiTinh - bit
+    '0868451257',        -- DienThoai - varchar(10)
+    N'Đà Lạt',       -- DiaChi - nvarchar(30)
+    1       -- TinhTrang - bit
+    )
+
+	SELECT * FROM dbo.HocVien 

@@ -17,3 +17,5 @@ WHERE TenKN='Word' and MANV in
 (SELECT MANV
 FROM dbo.NhanVienKyNang
 WHERE MSKN ='01') AND ChiNhanh.MSCN=NhanVien.MSCN
+
+--d.
