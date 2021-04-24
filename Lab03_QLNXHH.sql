@@ -454,4 +454,6 @@ VALUES
 	 115,
 	 2
     )
-
+	DELETE FROM dbo.CT_HoaDon
+	DELETE FROM dbo.HangHoa
+	DELETE FROM dbo.KhaNangCC
