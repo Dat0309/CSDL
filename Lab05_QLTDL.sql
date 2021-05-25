@@ -214,4 +214,158 @@ VALUES
     N'Trịnh bá'        -- TenKH - nvarchar(20)
     )
 
-	
+--------------------------------------
+--Hàm & thủ tục thêm dữ liệu vào bảng
+--------------------------------------
+CREATE PROC usp_ThemTour @matour CHAR(5), @tongsongay tinyint
+AS 
+	IF EXISTS (	SELECT * FROM dbo.Tour
+				WHERE MaTour=@matour)
+				PRINT N'Đã tồn tại tour trong danh sách tour!'
+	ELSE
+		BEGIN
+		    INSERT INTO dbo.Tour
+		    VALUES
+		    (   @matour, -- MaTour - char(5)
+		        @tongsongay   -- TongSoNgay - tinyint
+		        )
+				PRINT N'Thêm tour thành công!'
+		END
+
+EXEC usp_ThemTour 'T001',3
+
+CREATE PROC usp_ThemTP @matp CHAR(2),@tentp nvarchar(20)
+AS
+	IF EXISTS(	SELECT * FROM dbo.ThanhPho
+				WHERE MaTP=@matp)
+				PRINT N'Đã tồn tại thành phố !'
+	ELSE
+		BEGIN
+		    INSERT INTO dbo.ThanhPho
+		    VALUES
+		    (   @matp, -- MaTP - char(2)
+		        @tentp -- TenTP - nvarchar(20)
+		        )
+				PRINT N'Đã nhập thành công thành phố'+@matp
+		END
+EXEC usp_ThemTP '01',N'Đà Lạt'
+
+CREATE PROC usp_ThemTourTP @matour CHAR(5),@matp CHAR(2),@songay tinyint
+AS
+	IF EXISTS (SELECT * FROM dbo.Tour WHERE MaTour=@matour) AND EXISTS(SELECT * FROM dbo.ThanhPho WHERE MaTP=@matp)
+		BEGIN
+		    INSERT INTO dbo.TOUR_TP
+		    VALUES
+		    (   @matour, -- MaTour - char(5)
+		        @matp, -- MaTP - char(2)
+		        @songay   -- SoNgay - tinyint
+		        )
+				PRINT N'Đã thêm thành công thông tin tour thành phố!'
+		END
+	ELSE
+		BEGIN
+		    IF NOT EXISTS (SELECT * FROM dbo.Tour WHERE MaTour=@matour)
+				PRINT N'Không tồn tại tour trong cơ sở dữ liệu!'
+			ELSE
+				PRINT N'Không tồn tại thành phố trong cơ sở dữ liệu!'
+		END
+
+EXEC usp_ThemTourTP 'T005',N'Bình Phước',3
+
+CREATE PROC usp_ThemLichTour @matour CHAR(5),@ngaykh datetime,@tenhdv nvarchar(10),@songuoi int,@tenkh nvarchar(20)
+AS
+	IF EXISTS (SELECT * FROM dbo.Tour WHERE MaTour=@matour)
+		BEGIN
+		    INSERT INTO dbo.Lich_TourDL
+		    VALUES
+		    (   @matour,        -- MaTour - char(5)
+		        @ngaykh, -- NgayKH - datetime
+		        @tenhdv,       -- TenHDV - nvarchar(10)
+		        @songuoi,         -- SoNguoi - int
+		        @tenkh        -- TenKH - nvarchar(20)
+		        )
+				PRINT N'Đã nhập nhành công dữ liệu của lịch tour vào bảng!'
+		END
+	ELSE 
+		BEGIN
+		    IF NOT EXISTS (SELECT * FROM dbo.Tour WHERE MaTour=@matour)
+			PRINT N'Mã tour không tồn tại!'
+		END
+
+EXEC usp_ThemLichTour 'T001','02/14/2017',N'Vân',20,N'Nguyễn Hoàng'
+SELECT * FROM dbo.Lich_TourDL
+		
+-------------------------------------
+--Truy vấn dữ liệu
+-------------------------------------
+--a.Cho biết các tour du lịch có tổng số ngày của tour từ 3 đến 5 ngày
+SELECT MaTour
+FROM dbo.TOUR_TP
+GROUP BY MaTour
+HAVING SUM(SoNgay) BETWEEN 3 AND 5
+
+--b.Cho biết thông tin các tour được tổ chức trong tháng 2 năm 2017
+SELECT *
+FROM dbo.Lich_TourDL
+WHERE MONTH(NgayKH)=02 AND YEAR(NgayKH)=2017
+
+--c.Cho biết các tour không đi qua thành phố 'Nha Trang'
+SELECT MaTour 
+FROM dbo.Tour
+WHERE MaTour NOT IN
+	(	SELECT MaTour
+		FROM dbo.TOUR_TP JOIN dbo.ThanhPho ON ThanhPho.MaTP = TOUR_TP.MaTP
+		WHERE TenTP ='Nha Trang')
+
+--d.Cho biết số lượng thành phố mà mỗi tour du lịch đi qua
+SELECT MaTour,COUNT(MaTP) AS SLTP
+FROM dbo.TOUR_TP
+GROUP BY MaTour
+
+--e.Cho biết số lượn tour du lịch mà mỗi hướng dẫn viên hướng dẫn
+SELECT TenHDV,COUNT(MaTour) AS SLTour
+FROM dbo.Lich_TourDL
+GROUP BY TenHDV
+
+--f.Cho biết tên thành phố có nhiều tour du lịch đi qua nhất
+SELECT TTP1.MaTP,TP.TenTP
+FROM dbo.TOUR_TP TTP1, dbo.ThanhPho TP
+WHERE TP.MaTP=TTP1.MaTP
+GROUP BY TTP1.MaTP,TP.TenTP
+HAVING COUNT(TTP1.MaTour)>=ALL
+(	SELECT COUNT(TTP.MaTour)
+	FROM dbo.TOUR_TP TTP
+	GROUP BY TTP.MaTP)
+
+--g,Cho biết thong tin của tour du lịch đi qua tất cả thành phố
+SELECT *
+FROM dbo.Tour T
+WHERE NOT EXISTS (	SELECT *
+					FROM dbo.ThanhPho TP
+					WHERE NOT EXISTS (	SELECT *
+										FROM dbo.TOUR_TP TTP
+										WHERE TTP.MaTour=T.MaTour AND TTP.MaTP=TP.MaTP ))
+
+--h.Lập danh sách các tour đi qua thành phố Đà Lạt
+SELECT TTP.MaTour,TTP.SoNgay
+FROM dbo.TOUR_TP TTP, dbo.ThanhPho TP
+WHERE TTP.MaTP=TP.MaTP AND TP.TenTP=N'Đà Lạt'
+
+--i.Cho biết thông tin của tour du lịch có tổng số lượng khách tham gia nhiều nhất
+SELECT Tour.MaTour,TongSoNgay
+FROM dbo.Lich_TourDL,dbo.Tour
+WHERE Lich_TourDL.MaTour=Tour.MaTour
+GROUP BY Tour.MaTour,TongSoNgay
+HAVING SUM(SoNguoi) >=ALL
+	(	SELECT SUM(SoNguoi)
+		FROM dbo.Lich_TourDL
+		GROUP BY MaTour)
+
+--j.Cho biết tên thành phố mà tất cả các tour du lịch đều đi qua
+SELECT *
+FROM dbo.ThanhPho TP
+WHERE NOT EXISTS (	SELECT *
+					FROM dbo.Tour T
+					WHERE NOT EXISTS (	SELECT *
+										FROM dbo.TOUR_TP TTP
+										WHERE TTP.MaTP=TP.MaTP AND TTP.MaTour=T.MaTour))

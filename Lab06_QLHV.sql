@@ -257,14 +257,16 @@ GO
 --------------------------
 set dateformat dmy
 go
-exec usp_ThemHocPhi '0001','E11401','16/12/2008',150000,'HP Access 2-4-6', N'Lan'
-exec usp_ThemHocPhi '0002','E11402','16/12/2008',100000,'HP Access 2-4-6', N'Lan'
-exec usp_ThemHocPhi '0003','E11403','18/12/2008',150000,'HP Access 2-4-6', N'Vân'
-exec usp_ThemHocPhi '0004','W12301','15/01/2009',50000,'HP Access 2-4-6', N'Vân'
-exec usp_ThemHocPhi '0005','A07501','02/01/2008',120000,'HP Excel 3-5-7', N'Vân'
-exec usp_ThemHocPhi '0006','A07502','02/01/2008',120000,'HP Excel 3-5-7', N'Vân'
-exec usp_ThemHocPhi '0007','A07503','02/01/2008',80000,'HP Excel 3-5-7', N'Vân'
-exec usp_ThemHocPhi '0008','A07502','18/02/2008',100000,'HP Word 2-4-6', N'Lan'
+exec usp_ThemHocPhi '0001','E11401','02/01/2008',120000,'HP Excel 3-5-7', N'Vân'
+exec usp_ThemHocPhi '0002','E11402','02/01/2008',120000,'HP Excel 3-5-7', N'Vân'
+exec usp_ThemHocPhi '0003','E11403','02/01/2008',80000,'HP Excel 3-5-7', N'Vân'
+ 
+exec usp_ThemHocPhi '0005','A07501','16/12/2008',150000,'HP Access 2-4-6', N'Lan'
+exec usp_ThemHocPhi '0006','A07502','16/12/2008',100000,'HP Access 2-4-6', N'Lan'
+exec usp_ThemHocPhi '0007','A07503','18/12/2008',150000,'HP Access 2-4-6', N'Vân'
+exec usp_ThemHocPhi '0008','A07502','15/01/2009',50000,'HP Access 2-4-6', N'Vân'
+
+DELETE FROM dbo.HocPhi
 
 --b.Cập nhật thông tin của một học viên cho trước
 CREATE PROC usp_UpdateHocVien @mshv CHAR(10),@ho nvarchar(20),@ten nvarchar(10)
@@ -369,8 +371,71 @@ CREATE PROC usp_DSHVChuaDuHP @malop CHAR(4)
 AS 
 	IF EXISTS (SELECT * FROM dbo.Lop WHERE MaLop=@malop)
 		BEGIN
-		    
+		    SELECT hv.MSHV,hv.Ho,hv.Ten,hv.MaLop
+			FROM dbo.HocPhi hp,dbo.HocVien hv,dbo.Lop l
+			WHERE l.MaLop=hv.MaLop AND HV.MaLop=@malop AND l.MaLop=@malop AND HP.MSHV=HV.MSHV AND l.HocPhi-HP.SoTien>0
+		END
+	ELSE
+		BEGIN
+		    IF NOT EXISTS(SELECT * FROM dbo.Lop WHERE MaLop=@malop)
+				PRINT N'Không tồn tại lớp trong database!'
 		END
 
-		SELECT * FROM dbo.Lop
-		SELECT * FROM dbo.HocPhi
+EXEC usp_DSHVChuaDuHP 'A075'
+--DROP PROC usp_DSHVChuaDuHP
+------------------------------------
+--Hàm 
+------------------------------------
+--Tính tổng số học phí đã thu được của một lớp khi biết mã lớp
+CREATE FUNCTION tongHocPhiLop(@malop CHAR(5))
+RETURNS int
+AS
+BEGIN
+    DECLARE @tongTien INT
+		SELECT @tongTien = SUM(hp.SoTien)
+		FROM dbo.HocPhi hp, dbo.HocVien hv,dbo.Lop l
+		WHERE hv.MaLop=l.MaLop AND l.MaLop = @malop AND hv.MSHV=hp.MSHV
+		RETURN @tongTien
+END
+
+PRINT dbo.tongHocPhiLop('E114')
+-----------------------------------------------------
+--b.Tính tổng số học phí thu được trong một khoảng thời gian cho trước
+CREATE FUNCTION tongHocPhiTime(@thoigian datetime)
+RETURNS int
+AS
+BEGIN
+    DECLARE @tongTien INT
+    SELECT @tongTien = SUM(hp.SoTien) 
+	FROM dbo.HocPhi hp
+	WHERE hp.NgayThu=@thoigian
+	RETURN @tongTien
+END
+
+PRINT dbo.tongHocPhiTime('02/01/2008')
+--------------------------------------------------------
+--c.Cho biết một học viên cho trước đã nộp đủ học phí hay chưa
+CREATE FUNCTION nopHocPhi(@mshv CHAR(10))
+RETURNS nvarchar(100)
+AS
+BEGIN
+	IF EXISTS(SELECT * FROM dbo.HocPhi WHERE MSHV=@mshv)
+		begin
+			DECLARE @count INT=0;
+		    SELECT @count=COUNT(*)
+			FROM dbo.HocVien hv, dbo.HocPhi hp,dbo.Lop l
+			WHERE  hv.MSHV=hp.MSHV AND hp.MSHV=@mshv AND hv.MSHV=@mshv AND l.HocPhi-hp.SoTien>0 AND l.MaLop=hv.MaLop
+
+			IF (@count>0)
+				RETURN N'Học viên chưa nộp đủ học phí'
+			ELSE
+				RETURN N'Học viên đã nộp đủ học phí'
+		END
+    ELSE
+		RETURN N'Không tồn tại học viên'
+
+		RETURN N'Không xác định'
+END
+
+SELECT dbo.nopHocPhi('')
+--DROP FUNCTION nopHocPhi
