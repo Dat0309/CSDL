@@ -437,5 +437,7 @@ BEGIN
 		RETURN N'Không xác định'
 END
 
-SELECT dbo.nopHocPhi('')
+SELECT dbo.nopHocPhi('E11401')
 --DROP FUNCTION nopHocPhi
+
+---------------------------------------------------
