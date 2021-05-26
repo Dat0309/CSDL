@@ -269,26 +269,27 @@ exec usp_ThemHocPhi '0008','A07502','15/01/2009',50000,'HP Access 2-4-6', N'Vân
 DELETE FROM dbo.HocPhi
 
 --b.Cập nhật thông tin của một học viên cho trước
-CREATE PROC usp_UpdateHocVien @mshv CHAR(10),@ho nvarchar(20),@ten nvarchar(10)
+CREATE PROC usp_UpdateHocVien @mshv CHAR(10),@ho nvarchar(20),@ten nvarchar(10),@ns datetime,@phai nvarchar(3),@malop CHAR(4)
 AS
-	IF EXISTS (SELECT * FROM dbo.HocVien WHERE MSHV=@mshv)
+	IF EXISTS (SELECT * FROM dbo.HocVien WHERE MSHV=@mshv) AND EXISTS (SELECT * FROM dbo.Lop WHERE MaLop=@malop)
 		BEGIN
-		    UPDATE dbo.HocVien SET Ho=@ho,Ten=@ten WHERE MSHV=@mshv
+		    UPDATE dbo.HocVien SET Ho=@ho,Ten=@ten,NgaySinh=@ns,Phai=@phai,MaLop=@malop WHERE MSHV=@mshv
 			PRINT N'Cập nhật dữ liệu của học viên '+@mshv+N' thành công'
 			SELECT * FROM dbo.HocVien WHERE MSHV=@mshv
 		END
 	ELSE 
-		PRINT N'Không tìm thấy thông tin của học viên có mã số '+@mshv+N' trong CSDL'
-
+		BEGIN
+			IF NOT EXISTS(SELECT * FROM dbo.HocVien WHERE MSHV=@mshv)
+				PRINT N'Không tìm thấy thông tin của học viên có mã số '+@mshv+N' trong CSDL'
+			ELSE
+				PRINT N'Không tồn tại lớp' +@malop+N'Trong CSDL'
+		END
+go
 
 ---------------------------
-exec usp_UpdateHocVien 'A07501',N'Lê Văn', N'Minh'
-exec usp_UpdateHocVien 'A07502',N'Nguyễn Thị', N'Mai'
-exec usp_UpdateHocVien 'A07503',N'Lê Ngọc', N'Tuấn'
-exec usp_UpdateHocVien 'E11401',N'Vương Tuấn', N'Vũ'
-exec usp_UpdateHocVien 'E11402',N'Lý Ngọc', N'Hân'
-exec usp_UpdateHocVien 'E11403',N'Trần Mai', N'Linh'
-exec usp_UpdateHocVien 'W12301',N'Nguyễn Ngọc', N'Tuyết'
+DROP PROC dbo.usp_UpdateHocVien
+exec usp_UpdateHocVien 'A07501',N'Lê Văn', N'Minh','06/10/1998','Nam','A075'
+
 
 
 --c.Xóa một học viên cho trước
