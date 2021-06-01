@@ -290,7 +290,7 @@ go
 DROP PROC dbo.usp_UpdateHocVien
 exec usp_UpdateHocVien 'A07501',N'Lê Văn', N'Minh','06/10/1998','Nam','A075'
 
-
+SELECT * FROM dbo.HocVien
 
 --c.Xóa một học viên cho trước
 CREATE PROC usp_DeleteHocVien @mshv CHAR(10)
